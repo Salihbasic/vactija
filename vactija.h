@@ -5,6 +5,7 @@
 
 #define VAKTIJA_API_URL "https://api.vaktija.ba/"
 #define PRAYER_TIME_NUM 6
+#define JSON_PARSER_STORELENGTH 64
 
 struct vaktija {
 
@@ -22,5 +23,7 @@ int cache_exists(const char *path);
 int cache_outdated(const char *path);
 
 void download_latest(const char *path);
+
+void read_cache(const char *path, struct vaktija *result);
 
 #endif

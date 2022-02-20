@@ -1,11 +1,16 @@
 #include <stdio.h>
+#include <string.h>
 #include "test.h"
+
 #include "../util/temporal.h"
+#include "../vactija.h"
 
 static int passed_test = 0;
 static int failed_test = 0;
 
 int timestr_parsing(void);
+int minute_comparison(void);
+int jsonparse_test(void);
 
 void test(int (*testf)(void), char *name)
 {
@@ -71,10 +76,35 @@ int minute_comparison(void)
 
 }
 
+int jsonparse_test(void)
+{
+
+    struct vaktija v;
+    read_cache("test/vactijacache", &v);
+
+    /*
+        Based on values from the test/vactijacache file
+    */
+    check(strcmp(v.location, "Sarajevo") == 0);
+    check(strcmp(v.date_hijra, "18. redžeb 1443") == 0);
+    check(strcmp(v.date_greg, "subota, 19. februar 2022") == 0);
+    
+    check(strcmp(v.prayers[0], "4:59") == 0);
+    check(strcmp(v.prayers[1], "6:35") == 0);
+    check(strcmp(v.prayers[2], "12:01") == 0);
+    check(strcmp(v.prayers[3], "14:52") == 0);
+    check(strcmp(v.prayers[4], "17:27") == 0);
+    check(strcmp(v.prayers[5], "18:51") == 0);
+
+    done();
+
+}
+
 int main(void) {
 
     test(timestr_parsing, "parsing timestrings");
     test(minute_comparison, "comparing minutes");
+    test(jsonparse_test, "parsing cache json");
 
     printf("Ran %d tests. Failed %d.\n", (passed_test + failed_test), failed_test);
 
