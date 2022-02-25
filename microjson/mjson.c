@@ -227,10 +227,10 @@ static int json_internal_read_object(const char *cp,
 		    memcpy(lptr, &cursor->dflt.ushortint,
 		           sizeof(unsigned short));
 		    break;
-		case t_time:
+		/* case t_time:
 		case t_real:
 		    memcpy(lptr, &cursor->dflt.real, sizeof(double));
-		    break;
+		    break; */
 		case t_string:
 		    if (parent != NULL
 			&& parent->element_type != t_structobject
