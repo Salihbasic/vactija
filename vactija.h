@@ -1,21 +1,27 @@
 #ifndef VACTIJA_H
 #define VACTIJA_H
 
-#include <time.h>
-
 #define VAKTIJA_API_URL "https://api.vaktija.ba/"
+
+/* 
+    Number of tokens (JSON elements) in vaktija JSON file.
+    Essentially determined experimentally.
+*/
+#define VACTIJA_JSMN_TOKENS 15
+
+/*
+    Array sizes as they appear in the vaktija JSON file.
+*/
 #define PRAYER_TIME_NUM 6
-#define JSON_PARSER_STORELENGTH 64
+#define DATUM_NUM 2
 
 struct vaktija {
 
-    char *prayers[PRAYER_TIME_NUM];
+    char **prayers;
 
     char *location;
 
-    char *date_greg;
-
-    char *date_hijra;
+    char **dates;
 
 };
 
@@ -24,6 +30,9 @@ int cache_outdated(const char *path);
 
 void download_latest(const char *path);
 
-void read_cache(const char *path, struct vaktija *result);
+struct vaktija *create_vaktija();
+
+char *read_cache(const char *path);
+struct vaktija *parse_cache(const char *json);
 
 #endif

@@ -8,9 +8,11 @@
 #include <string.h>
 #include <curl/curl.h>
 
+#define JSMN_HEADER
+#include "jsmn/jsmn.h"
 #include "vactija.h"
 #include "util/temporal.h"
-#include "microjson/mjson.h"
+#include "util/jsmnutil.h"
 
 /* 
     Errcode needs to be equal to whetever errno value
@@ -151,63 +153,40 @@ void download_latest(const char *path)
 }
 
 /*
-    Reads the data from the cache file which is in the JSON format.
+    Allocates a new vaktija to the heap. All pointers
+    inside it are unassigned.
 
-    It then feeds the JSON data into the microjson parser (authored
-    by Eric S. Raymond) in order to get the data out of the JSON
-    and then stores it all in the result vaktija struct.
-
-    In case the JSON structure changes within the API, this function
-    will certainly fail. Therefore, any changes to the API need to be
-    addressed here.
+    Has to be freed manually once it is no longer useful.
 */
-void read_cache(const char *path, struct vaktija *result)
+struct vaktija *create_vaktija()
 {
 
-    /*
-       NOTE: After a while, I've finally figured out how this damn
-       parser works.
+    struct vaktija *v = malloc(sizeof *v);
 
-       Basically, the *_store will store all the strings from the
-       array as if they were one massive concatenated string, all
-       separated with a \0 character.
-       These will then be sent into appropriate array indices.
+    if (v == NULL) {
 
-       In other words, JSON_PARSER_STORELENGTH should be a large
-       enough number to store an entire array-worth of strings.
-    */
+        printf("Could not allocate enough memory to store vaktija data!\n");
 
-    const size_t loclen = 20;
-    char location[loclen];
+        int errcode = errno;
 
-    char *prayers[PRAYER_TIME_NUM];
-    char prayer_store[JSON_PARSER_STORELENGTH];
-    int prayer_count;
+        char *errstr = strerror(errcode);
+        printf("Err: %s\n", errstr);
+        exit(EXIT_FAILURE);
 
-    char *dates[2];
-    char date_store[JSON_PARSER_STORELENGTH];
-    int date_count;
+    }
 
-    const struct json_attr_t vaktija_attrs[] = {
+    return v;
 
-        {"lokacija",    t_string,      .addr.string = location,
-                                       .len = loclen},
+}
 
-        {"vakat",       t_array,       .addr.array.element_type = t_string,
-                                       .addr.array.arr.strings.ptrs = prayers,
-                                       .addr.array.arr.strings.store = prayer_store,
-                                       .addr.array.arr.strings.storelen = JSON_PARSER_STORELENGTH,
-                                       .addr.array.count = &prayer_count,
-                                       .addr.array.maxlen = PRAYER_TIME_NUM},
+/*
+    Reads the data from the cache file into a string.
 
-        {"datum",       t_array,       .addr.array.element_type = t_string,
-                                       .addr.array.arr.strings.ptrs = dates,
-                                       .addr.array.arr.strings.store = date_store,
-                                       .addr.array.arr.strings.storelen = JSON_PARSER_STORELENGTH,
-                                       .addr.array.count = &date_count,
-                                       .addr.array.maxlen = 2}
-
-    };
+    The returned string will be null-terminated and dynamically
+    allocated, therefore it has to be freed once it's no longer used.
+*/
+char *read_cache(const char *path)
+{
 
     FILE *cache = fopen(path, "r");
 
@@ -223,6 +202,15 @@ void read_cache(const char *path, struct vaktija *result)
 
         char *json_prayer_buf = malloc(sizeof *json_prayer_buf * (file_size + 1));
 
+        if (json_prayer_buf == NULL) {
+
+            printf("Could not allocate enough memory to read contents of cache file!\n");
+
+            int errcode = errno;
+            vactija_error(errcode);
+
+        }
+
         int read = fread(json_prayer_buf, sizeof(char), file_size, cache);
 
         if (read != file_size) {
@@ -235,25 +223,7 @@ void read_cache(const char *path, struct vaktija *result)
 
         json_prayer_buf[file_size] = '\0';
 
-        int status = json_read_object(json_prayer_buf, vaktija_attrs, NULL);
-
-        if (status != 0) {
-
-            printf("An error has occurred during JSON parsing!\n");
-            printf("Err: %s (code: %d)\n", json_error_string(status), status);
-
-            exit(EXIT_FAILURE);
-
-        }
-
-        for (int i = 0; i < PRAYER_TIME_NUM; i++) {
-            result->prayers[i] = prayers[i];
-        }
-        result->location = location;
-        result->date_hijra = dates[0];
-        result->date_greg = dates[1];
-
-        free(json_prayer_buf);
+        return json_prayer_buf;
 
     } else {
     
@@ -262,5 +232,74 @@ void read_cache(const char *path, struct vaktija *result)
         vactija_error(errcode);
 
     }
+
+}
+
+/*
+    Uses jsmn by Serge Zaitsev to parse/tokenise the JSON from cache
+    file and then processes it with functions from jsmnutil.
+
+    This function is highly dependent on the current JSON structure
+    of the API, which can be changed in the future, therefore this
+    function must be updated in such cases.
+
+    (All values for the structure were determined experimentally.
+    jsmn is a minimalist library, and while a fully generalised
+    parser could be built on top of it, it'd be a waste of time
+    for this project, which is why only the barebones have been
+    done here.)
+*/
+struct vaktija *parse_cache(const char *json)
+{
+
+    jsmn_parser pars;
+    jsmntok_t tok[VACTIJA_JSMN_TOKENS]; /* Based on current JSON file structure */
+
+    jsmn_init(&pars);
+    int result = jsmn_parse(&pars, json, strlen(json), tok, VACTIJA_JSMN_TOKENS);
+
+    if (result < 0) {
+        
+        char *errstr;
+        switch (result) {
+        
+        case JSMN_ERROR_NOMEM:
+            errstr = "JSMN_ERROR_NOMEM";
+
+        case JSMN_ERROR_INVAL:
+            errstr = "JSMN_ERROR_INVALID_JSON";
+        
+        case JSMN_ERROR_PART:
+            errstr = "JSMN_ERROR_NOT_FULL_JSON_STRING";
+
+        }
+
+        printf("Encountered an error while parsing vaktija JSON (%s)!\n", errstr);
+        exit(EXIT_FAILURE);
+
+    }
+
+    if (result != VACTIJA_JSMN_TOKENS) {
+
+        printf("Parsed %d JSON tokens (expected: %d)!\n", result, VACTIJA_JSMN_TOKENS);
+        exit(EXIT_FAILURE);
+
+    }
+
+    jsmntok_t *loctok = find_by_key(json, "lokacija", tok, VACTIJA_JSMN_TOKENS);
+    char *location = get_simple(json, loctok);
+
+    int dati = find_idx_by_key(json, "datum", tok, VACTIJA_JSMN_TOKENS);
+    char **datums = get_array(json, dati, tok, DATUM_NUM);
+
+    int vakati = find_idx_by_key(json, "vakat", tok, VACTIJA_JSMN_TOKENS);
+    char **vakats = get_array(json, vakati, tok, PRAYER_TIME_NUM);
+
+    struct vaktija *v = create_vaktija();
+    v->location = location;
+    v->dates = datums;
+    v->prayers = vakats;
+
+    return v;
 
 }
