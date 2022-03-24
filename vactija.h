@@ -1,6 +1,8 @@
 #ifndef VACTIJA_H
 #define VACTIJA_H
 
+#include <time.h>
+
 #define VAKTIJA_API_URL "https://api.vaktija.ba/"
 
 /* 
@@ -34,5 +36,7 @@ struct vaktija *create_vaktija();
 
 char *read_cache(const char *path);
 struct vaktija *parse_cache(const char *json);
+
+int next_vakat(const struct vaktija *vaktija, struct tm time);
 
 #endif

@@ -1,9 +1,9 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <time.h>
 #include <errno.h>
 #include <string.h>
 #include <curl/curl.h>
@@ -301,5 +301,57 @@ struct vaktija *parse_cache(const char *json)
     v->prayers = vakats;
 
     return v;
+
+}
+
+/*
+    Returns the index of the next vakat based on provided time.
+*/
+int next_vakat(const struct vaktija *vaktija, struct tm time)
+{
+
+    for (int i = 0; i < PRAYER_TIME_NUM; i++) {
+
+        char *vakatstr = vaktija->prayers[i];
+        struct tm vakattime;
+        parse_timestr(vakatstr, &vakattime);
+
+        if (compare_time(time, vakattime) <= 0) {
+
+            /*
+                Since 0 represents the starting time of fajr,
+                if our time is earlier than fajr, we can assume it
+                is still ish'a prayer.
+            */
+            if (i == 0 && (compare_time(time, vakattime) != 0)) {
+
+                return (PRAYER_TIME_NUM - 1);
+
+            } else {
+
+                return i;
+
+            }
+
+            return i;
+
+        } else {
+
+            /*
+                This is in case of ish'a prayer which lasts 
+                all the way up to fajr the next day, but we want
+                to keep our vaktija running constantly.
+            */
+            if (i == (PRAYER_TIME_NUM - 1)) {
+
+                return i;
+
+            }
+
+        }
+
+    }
+
+    return -1; /* This should never get returned. */
 
 }

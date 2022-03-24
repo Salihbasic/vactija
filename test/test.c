@@ -14,6 +14,7 @@ int timestr_parsing(void);
 int minute_comparison(void);
 int jsonparse_test(void);
 int jsonsearch_test(void);
+int nextvakat_test(void);
 
 void test(int (*testf)(void), char *name)
 {
@@ -34,6 +35,7 @@ int timestr_parsing(void) {
     char *tstr1 = "00:00";
     char *tstr2 = "11:23";
     char *tstr3 = "03:07";
+    char *tstr4 = "4:35";
 
     struct tm res1;
     parse_timestr(tstr1, &res1);
@@ -46,6 +48,10 @@ int timestr_parsing(void) {
     struct tm res3;
     parse_timestr(tstr3, &res3);
     check((res3.tm_hour == 3) && (res3.tm_min == 7));
+
+    struct tm res4;
+    parse_timestr(tstr4, &res4);
+    check((res4.tm_hour == 4) && (res4.tm_min == 35));
 
     done();
 
@@ -145,12 +151,71 @@ int jsonparse_test(void)
 
 }
 
+int nextvakat_test(void)
+{
+
+    char *json = read_cache("test/vactijacache");
+    struct vaktija *v = parse_cache(json);
+
+    /* Expect index 5 */
+    char *time1 = "4:50";
+    struct tm tm1;
+    parse_timestr(time1, &tm1);
+    check(next_vakat(v, tm1) == 5);
+
+    /* Expect index 0 */
+    char *time2 = "4:59";
+    struct tm tm2;
+    parse_timestr(time2, &tm2);
+    check(next_vakat(v, tm2) == 0);
+
+    /* Expect index 1 */
+    char *time3 = "5:20";
+    struct tm tm3;
+    parse_timestr(time3, &tm3);
+    check(next_vakat(v, tm3) == 1);
+
+    /* Expect index 2 */
+    char *time4 = "11:59";
+    struct tm tm4;
+    parse_timestr(time4, &tm4);
+    check(next_vakat(v, tm4) == 2);
+
+    /* Expect index 3 */
+    char *time5 = "12:02";
+    struct tm tm5;
+    parse_timestr(time5, &tm5);
+    check(next_vakat(v, tm5) == 3);
+
+    /* Expect index 4 */
+    char *time6 = "15:00";
+    struct tm tm6;
+    parse_timestr(time6, &tm6);
+    check(next_vakat(v, tm6) == 4);
+
+    /* Expect index 5 */
+    char *time7 = "18:00";
+    struct tm tm7;
+    parse_timestr(time7, &tm7);
+    check(next_vakat(v, tm7) == 5);
+
+    /* Expect index 5 */
+    char *time8 = "20:20";
+    struct tm tm8;
+    parse_timestr(time8, &tm8);
+    check(next_vakat(v, tm8) == 5);
+
+    done();
+
+}
+
 int main(void) {
 
     test(timestr_parsing, "parsing timestrings");
     test(minute_comparison, "comparing minutes");
     test(jsonsearch_test, "searching json test");
     test(jsonparse_test, "parsing cache json");
+    test(nextvakat_test, "getting next vakat");
 
     printf("Ran %d tests. Failed %d.\n", (passed_test + failed_test), failed_test);
 
