@@ -75,18 +75,54 @@ int compare_time(struct tm first, struct tm second)
 void parse_timestr(const char *str, struct tm *res) 
 {
 
-    if (strlen(str) != 5) {
-        printf("Invalid string passed to parse_timestr!\n");
-        exit(EXIT_FAILURE);
+    int coli = 0; /* Index of ':' in the string */
+    while (str[coli] != '\0') {
+
+        if (str[coli] == ':') {
+            break;
+        }
+
+        /* ':' should be 2nd or 3rd character */
+        if (coli > 2) {
+            coli = -1;
+            break;
+        }
+        
+
+        coli++;
+
     }
 
-    /* Doing this to avoid depending on strptime which is not
-       in the stdlib. 
+    if (coli == -1) {
+
+        printf("Invalid string passed to parse_timestr!\n");
+        exit(EXIT_FAILURE);
+
+    }
+
+    int len = strlen(str);
+    if (coli == 1 && len != 4) {
+
+        printf("Invalid string passed to parse_timestr!\n");
+        exit(EXIT_FAILURE);
+
+    }
+
+    if (coli == 2 && len != 5) {
+
+        printf("Invalid string passed to parse_timestr!\n");
+        exit(EXIT_FAILURE);
+
+    }
+
+    /* 
+        Doing this to avoid depending on strptime which is not
+        always supported.
        
-       Ignoring end pointer.
+        Ignoring end pointer.
     */
     int hours = strtol(str, NULL, 10);
-    int minutes = strtol((str + 3), NULL, 10);
+    int minutes = strtol((str + (coli + 1)), NULL, 10);
 
     res->tm_sec = 0;
     res->tm_min = abs(minutes);
