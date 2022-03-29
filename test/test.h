@@ -11,6 +11,6 @@
         }                     \
     } while (0)
 
-void test(int (*testf)(void), char *name);
+static void test(int (*testf)(void), char *name);
 
 #endif

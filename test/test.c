@@ -10,13 +10,13 @@
 static int passed_test = 0;
 static int failed_test = 0;
 
-int timestr_parsing(void);
-int minute_comparison(void);
-int jsonparse_test(void);
-int jsonsearch_test(void);
-int nextvakat_test(void);
+static int timestr_parsing(void);
+static int minute_comparison(void);
+static int jsonparse_test(void);
+static int jsonsearch_test(void);
+static int nextvakat_test(void);
 
-void test(int (*testf)(void), char *name)
+static void test(int (*testf)(void), char *name)
 {
 
     int res = testf();
@@ -30,7 +30,7 @@ void test(int (*testf)(void), char *name)
 
 }
 
-int timestr_parsing(void) {
+static int timestr_parsing(void) {
 
     char *tstr1 = "00:00";
     char *tstr2 = "11:23";
@@ -57,7 +57,7 @@ int timestr_parsing(void) {
 
 }
 
-int minute_comparison(void) 
+static int minute_comparison(void) 
 {
 
     char *time1 = "14:23";
@@ -85,7 +85,7 @@ int minute_comparison(void)
 
 }
 
-int jsonsearch_test(void)
+static int jsonsearch_test(void)
 {
 
     char *json = read_cache("test/vactijacache");
@@ -123,7 +123,7 @@ int jsonsearch_test(void)
 
 }
 
-int jsonparse_test(void)
+static int jsonparse_test(void)
 {
 
     char *json = read_cache("test/vactijacache");
@@ -151,7 +151,7 @@ int jsonparse_test(void)
 
 }
 
-int nextvakat_test(void)
+static int nextvakat_test(void)
 {
 
     char *json = read_cache("test/vactijacache");
