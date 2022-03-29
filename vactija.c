@@ -80,7 +80,21 @@ int cache_outdated(const char *path)
 
 }
 
-void download_latest(const char *path)
+/*
+    Downloads the vaktija JSON data from the API based on provided parameters.
+
+    loc holds the location ID for a particular city, which can be found
+    on the API examples site. If it is not provided (i.e NULL is passed), then
+    it takes the default value of 0.
+
+    date holds the date, which can be provided in the format 'year/month/day',
+    where month and day can be left off (in which case it will take current day's values
+    in their place). If it is not present (i.e NULL is passed), then it shall
+    download the particular vaktija data for the current day.
+
+    Examples page: https://api.vaktija.ba/vaktija/v1
+*/
+void download_vaktija(const char *path, const char *loc, const char *date)
 {
 
     CURL *curl = curl_easy_init();
@@ -92,8 +106,52 @@ void download_latest(const char *path)
         if (cache) {
 
             char errbuf[CURL_ERROR_SIZE];
+            char *url;
+            char *defaultloc = "0";
 
-            curl_easy_setopt(curl, CURLOPT_URL, VAKTIJA_API_URL);
+            size_t apilen = strlen(VAKTIJA_API_URL);
+            size_t loclen;
+
+            if (loc == NULL) {
+                loclen = strlen(defaultloc);
+            } else {
+                loclen = strlen(loc);
+            }
+
+            if (date != NULL) {
+                size_t datelen = strlen(date);
+                url = malloc(sizeof *url * (apilen + loclen + datelen + 2)); /* for extra / */
+            } else {
+                url = malloc(sizeof *url * (apilen + loclen + 1));
+            }
+
+            if (url == NULL) {
+
+                printf("Could not allocate enough memory to store URL. Download aborted!\n");
+
+                int errcode = errno;
+
+                char *errstr = strerror(errcode);
+                printf("Err: %s\n", errstr);
+                exit(EXIT_FAILURE);
+
+            }
+            url[0] = '\0';
+
+            /* VAKTIJA_API_URL ends with /, so we can just append location ID */
+            strcat(url, VAKTIJA_API_URL);
+            if (loc == NULL) {
+                strcat(url, defaultloc);
+            } else {
+                strcat(url, loc);
+            }
+            
+            if (date != NULL) {
+                strcat(url, "/"); /* since ID doesn't end with / */
+                strcat(url, date);
+            }
+
+            curl_easy_setopt(curl, CURLOPT_URL, url);
             
             /* write to cache using the default write to file function */
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, cache);

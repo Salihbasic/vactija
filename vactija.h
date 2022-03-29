@@ -3,7 +3,7 @@
 
 #include <time.h>
 
-#define VAKTIJA_API_URL "https://api.vaktija.ba/"
+#define VAKTIJA_API_URL "https://api.vaktija.ba/vaktija/v1/"
 
 /* 
     Number of tokens (JSON elements) in vaktija JSON file.
@@ -30,7 +30,7 @@ struct vaktija {
 int cache_exists(const char *path);
 int cache_outdated(const char *path);
 
-void download_latest(const char *path);
+void download_vaktija(const char *path, const char *loc, const char *date);
 
 struct vaktija *create_vaktija();
 
