@@ -1,4 +1,3 @@
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -13,7 +12,9 @@
 #include "vactija.h"
 #include "util/temporal.h"
 #include "util/jsmnutil.h"
+#include "util/cachefile.h"
 
+#ifndef vactija_error
 /* 
     Errcode needs to be equal to whetever errno value
     the error is supposed to display.
@@ -21,194 +22,8 @@
 #define vactija_error(errcode)                                        \
     char *errstr = strerror(errcode);                                 \
     printf("Err: %s\n", errstr);                                      \
-    exit(EXIT_FAILURE)           
-
-/*
-    Returns 1 iff the cache file exists.
-*/
-int cache_exists(const char *path)
-{
-
-    return (access(path, F_OK) == 0);
-
-}
-
-/*
-    Checks whether the cache file which holds all the prayer data, 
-    is outdated.
-
-    Returns 1 iff the cache file is outdated (i.e its metadata date
-    is earlier than the current date), and 0 otherwise.
-
-    In case the file does not exist, it is treated as outdated.
-*/
-int cache_outdated(const char *path)
-{
-
-    if (cache_exists(path) != 1) {
-        return 1;
-    }
-
-    struct stat meta;
-
-    if (stat(path, &meta) == 0) {
-
-        time_t current;
-        time(&current);
-
-        time_t mtime = meta.st_mtim.tv_sec;
-
-        /* 
-           localtime stores results in a buffer, so we need to
-           store them in a local struct before calling it again
-
-           (could have used localtime_r, but no point in going
-           GNU specific without multithreading)
-        */
-        struct tm curr = *localtime(&current);
-        struct tm mt = *localtime(&mtime);
-
-        return compare_date(curr, mt) > 0;
-
-    } else {
-    
-        int errcode = errno;
-        printf("Encountered an error while checking cache metadata.\n");
-        vactija_error(errcode);
-
-    }
-
-}
-
-/*
-    Downloads the vaktija JSON data from the API based on provided parameters.
-
-    loc holds the location ID for a particular city, which can be found
-    on the API examples site. If it is not provided (i.e NULL is passed), then
-    it takes the default value of 0.
-
-    date holds the date, which can be provided in the format 'year/month/day',
-    where month and day can be left off (in which case it will take current day's values
-    in their place). If it is not present (i.e NULL is passed), then it shall
-    download the particular vaktija data for the current day.
-
-    Examples page: https://api.vaktija.ba/vaktija/v1
-*/
-void download_vaktija(const char *path, const char *loc, const char *date)
-{
-
-    CURL *curl = curl_easy_init();
-
-    if (curl) {
-
-        FILE *cache = fopen(path, "w");
-
-        if (cache) {
-
-            char errbuf[CURL_ERROR_SIZE];
-            char *url;
-            char *defaultloc = "0";
-
-            size_t apilen = strlen(VAKTIJA_API_URL);
-            size_t loclen;
-
-            if (loc == NULL) {
-                loclen = strlen(defaultloc);
-            } else {
-                loclen = strlen(loc);
-            }
-
-            if (date != NULL) {
-                size_t datelen = strlen(date);
-                url = malloc(sizeof *url * (apilen + loclen + datelen + 2)); /* for extra / */
-            } else {
-                url = malloc(sizeof *url * (apilen + loclen + 1));
-            }
-
-            if (url == NULL) {
-
-                printf("Could not allocate enough memory to store URL. Download aborted!\n");
-
-                int errcode = errno;
-
-                char *errstr = strerror(errcode);
-                printf("Err: %s\n", errstr);
-                exit(EXIT_FAILURE);
-
-            }
-            url[0] = '\0';
-
-            /* VAKTIJA_API_URL ends with /, so we can just append location ID */
-            strcat(url, VAKTIJA_API_URL);
-            if (loc == NULL) {
-                strcat(url, defaultloc);
-            } else {
-                strcat(url, loc);
-            }
-            
-            if (date != NULL) {
-                strcat(url, "/"); /* since ID doesn't end with / */
-                strcat(url, date);
-            }
-
-            curl_easy_setopt(curl, CURLOPT_URL, url);
-            
-            /* write to cache using the default write to file function */
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, cache);
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
-
-            curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
-            errbuf[0] = 0;
-
-            CURLcode result = curl_easy_perform(curl);
-
-            if (result == CURLE_OK) {
-
-                curl_easy_cleanup(curl);
-                fclose(cache);
-                return;
-
-            } else {
-
-                size_t errlen = strlen(errbuf); 
-                printf("Encountered an error with libcurl!\n");
-                printf("libcurl error code: %d\n", result);
-
-                if (errlen) {
-
-                    printf("libcurl error: %s%s", errbuf, 
-                            (errbuf[errlen - 1] != '\n' ? "\n" : ""));
-
-                } else {
-
-                    printf("libcurl (generic) error: %s\n", curl_easy_strerror(result));
-
-                }
-
-                curl_easy_cleanup(curl);
-                fclose(cache);
-
-                exit(EXIT_FAILURE);
-
-            }
-
-        } else {
-
-            int errcode = errno;
-            printf("Encountered an error while opening cache file!\n");
-            vactija_error(errcode);
-
-        }
-
-    } else {
-    
-        printf("Could not initialise libcurl handle!\n");
-
-        exit(EXIT_FAILURE);
-
-    }
-
-}
+    exit(EXIT_FAILURE)          
+#endif 
 
 /*
     Allocates a new vaktija to the heap. All pointers
@@ -216,7 +31,7 @@ void download_vaktija(const char *path, const char *loc, const char *date)
 
     Has to be freed manually once it is no longer useful.
 */
-struct vaktija *create_vaktija()
+static struct vaktija *create_vaktija()
 {
 
     struct vaktija *v = malloc(sizeof *v);
@@ -237,65 +52,149 @@ struct vaktija *create_vaktija()
 
 }
 
-/*
-    Reads the data from the cache file into a string.
+struct mem_struct {
+    char *mem;
+    size_t size;
+};
 
-    The returned string will be null-terminated and dynamically
-    allocated, therefore it has to be freed once it's no longer used.
-*/
-char *read_cache(const char *path)
+static size_t write_callback(char *contents, size_t size, size_t nmemb, char *userp)
 {
 
-    FILE *cache = fopen(path, "r");
+    size_t realsize = size * nmemb;
+    struct mem_struct *memory = (struct mem_struct *) userp;
 
-    if (cache) {
+    char *ptr = realloc(memory->mem, memory->size + (realsize + 1));
+    if (ptr == NULL) {
+        
+        int errcode = errno;
+        printf("Could not allocate enough memory to store JSON data. Download aborted!\n");
+        vactija_error(errcode);
 
-        /* 
-           We have to null-terminate the string, 
-           so finding out its size is necessary 
-        */
-        fseek(cache, 0, SEEK_END);
-        unsigned long file_size = ftell(cache);
-        rewind(cache);
+    }
 
-        char *json_prayer_buf = malloc(sizeof *json_prayer_buf * (file_size + 1));
+    memory->mem = ptr;
+    memcpy(&(memory->mem[memory->size]), contents, realsize);
+    memory->size += realsize;
+    memory->mem[realsize] = 0;
 
-        if (json_prayer_buf == NULL) {
+    return realsize;
 
-            printf("Could not allocate enough memory to read contents of cache file!\n");
+}
+
+/*
+    Downloads the vaktija JSON data from the API based on provided parameters.
+
+    loc holds the location ID for a particular city, which can be found
+    on the API examples site. If it is not provided (i.e NULL is passed), then
+    it takes the default value of 0.
+
+    date holds the date, which can be provided in the format 'year/month/day',
+    where month and day can be left off (in which case it will take current day's values
+    in their place). If it is not present (i.e NULL is passed), then it shall
+    download the particular vaktija data for the current day.
+
+    Examples page: https://api.vaktija.ba/vaktija/v1
+*/
+char *download_vaktija(const char *loc, const char *date)
+{
+
+    CURL *curl = curl_easy_init();
+
+    if (curl) {
+
+        char *url;
+
+        size_t apilen = strlen(VAKTIJA_API_URL);
+        size_t loclen = strlen(loc);
+
+        if (date != NULL) {
+
+            size_t datelen = strlen(date);
+            url = malloc(sizeof *url * (apilen + loclen + datelen + 2)); /* for extra / */
+
+        } else {
+
+            url = malloc(sizeof *url * (apilen + loclen + 1));
+
+        }
+
+        if (url == NULL) {
 
             int errcode = errno;
+            printf("Could not allocate enough memory to store URL. Download aborted!\n");
             vactija_error(errcode);
 
         }
+        url[0] = '\0';
 
-        int read = fread(json_prayer_buf, sizeof(char), file_size, cache);
+        /* VAKTIJA_API_URL ends with /, so we can just append location ID */
+        strncat(url, VAKTIJA_API_URL, apilen);
+        strncat(url, loc, loclen);        
+    
+        if (date != NULL) {
 
-        if (read != file_size) {
-            
-            printf("Could not read the entire file.\n");
-            printf("Filesize: %lu bytes.\n Read: %d bytes.\n", file_size, read);
+            strncat(url, "/", 1); /* since ID doesn't end with / */
+            strncat(url, date, strlen(date));
 
-            exit(EXIT_FAILURE);
         }
 
-        json_prayer_buf[file_size] = '\0';
+        curl_easy_setopt(curl, CURLOPT_URL, url);
+        
+        /* callback will reallocate enough memory */
+        struct mem_struct dw_json;
+        dw_json.mem = malloc(sizeof(char *) * 1);
+        dw_json.size = 0;
 
-        return json_prayer_buf;
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &dw_json);
 
+        char errbuf[CURL_ERROR_SIZE];
+        curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
+        errbuf[0] = 0;
+
+        CURLcode result = curl_easy_perform(curl);
+
+        if (result == CURLE_OK) {
+            
+            curl_easy_cleanup(curl);
+
+            return dw_json.mem;
+            
+        } else {
+            
+            size_t errlen = strlen(errbuf); 
+            printf("Encountered an error with libcurl!\n");
+            printf("libcurl error code: %d\n", result);
+            
+            if (errlen) {
+            
+                printf("libcurl error: %s%s", errbuf, 
+                        (errbuf[errlen - 1] != '\n' ? "\n" : ""));
+            
+            } else {
+            
+                printf("libcurl (generic) error: %s\n", curl_easy_strerror(result));
+            
+            }
+            
+            curl_easy_cleanup(curl);
+            exit(EXIT_FAILURE);
+
+        }
+        
     } else {
     
-        int errcode = errno;
-        printf("Encountered an error while opening the JSON file!\n");
-        vactija_error(errcode);
+        printf("Could not initialise libcurl handle!\n");
+
+        exit(EXIT_FAILURE);
 
     }
 
 }
 
 /*
-    Uses jsmn by Serge Zaitsev to parse/tokenise the JSON from cache
-    file and then processes it with functions from jsmnutil.
+    Uses jsmn by Serge Zaitsev to parse/tokenise the JSON from JSON
+    string and then processes it with functions from jsmnutil.
 
     This function is highly dependent on the current JSON structure
     of the API, which can be changed in the future, therefore this
@@ -307,7 +206,7 @@ char *read_cache(const char *path)
     for this project, which is why only the barebones have been
     done here.)
 */
-struct vaktija *parse_cache(const char *json)
+struct vaktija *parse_data(const char *json)
 {
 
     jsmn_parser pars;

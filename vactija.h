@@ -27,15 +27,9 @@ struct vaktija {
 
 };
 
-int cache_exists(const char *path);
-int cache_outdated(const char *path);
+char *download_vaktija(const char *loc, const char *date);
 
-void download_vaktija(const char *path, const char *loc, const char *date);
-
-struct vaktija *create_vaktija();
-
-char *read_cache(const char *path);
-struct vaktija *parse_cache(const char *json);
+struct vaktija *parse_data(const char *json);
 
 int next_vakat(const struct vaktija *vaktija, struct tm time);
 

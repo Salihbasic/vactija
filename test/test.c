@@ -5,6 +5,7 @@
 
 #include "../util/temporal.h"
 #include "../util/jsmnutil.h"
+#include "../util/cachefile.h"
 #include "../vactija.h"
 
 static int passed_test = 0;
@@ -117,7 +118,7 @@ static int jsonsearch_test(void)
         free(vakats[i]);
     }
     free(vakats);
-    free (location);
+    free(location);
 
     done();
 
@@ -128,8 +129,7 @@ static int jsonparse_test(void)
 
     char *json = read_cache("test/vactijacache");
 
-    struct vaktija *v = parse_cache(json);
-    
+    struct vaktija *v = parse_data(json);
 
     /*
         Based on values from the test/vactijacache file
@@ -146,6 +146,7 @@ static int jsonparse_test(void)
     check(strcmp(v->prayers[5], "18:51") == 0);
     
     free(json);
+    free(v);
 
     done();
 
@@ -155,7 +156,7 @@ static int nextvakat_test(void)
 {
 
     char *json = read_cache("test/vactijacache");
-    struct vaktija *v = parse_cache(json);
+    struct vaktija *v = parse_data(json);
 
     /* Expect index 5 */
     char *time1 = "4:50";
@@ -204,6 +205,9 @@ static int nextvakat_test(void)
     struct tm tm8;
     parse_timestr(time8, &tm8);
     check(next_vakat(v, tm8) == 5);
+
+    free(json);
+    free(v);
 
     done();
 
