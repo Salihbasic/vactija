@@ -32,5 +32,9 @@ char *download_vaktija(const char *loc, const char *date);
 struct vaktija *parse_data(const char *json);
 
 int next_vakat(const struct vaktija *vaktija, struct tm time);
+int current_vakat(const struct vaktija *vaktija, struct tm time);
+
+void print_vakat(const struct vaktija *vaktija, int vakat, int context);
+void print_vaktija(const struct vaktija *vaktija);
 
 #endif

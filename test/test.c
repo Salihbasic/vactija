@@ -16,6 +16,7 @@ static int minute_comparison(void);
 static int jsonparse_test(void);
 static int jsonsearch_test(void);
 static int nextvakat_test(void);
+static int currentvakat_test(void);
 
 static void test(int (*testf)(void), char *name)
 {
@@ -158,17 +159,17 @@ static int nextvakat_test(void)
     char *json = read_cache("test/vactijacache");
     struct vaktija *v = parse_data(json);
 
-    /* Expect index 5 */
+    /* Expect index 0 */
     char *time1 = "4:50";
     struct tm tm1;
     parse_timestr(time1, &tm1);
-    check(next_vakat(v, tm1) == 5);
+    check(next_vakat(v, tm1) == 0);
 
-    /* Expect index 0 */
+    /* Expect index 1 */
     char *time2 = "4:59";
     struct tm tm2;
     parse_timestr(time2, &tm2);
-    check(next_vakat(v, tm2) == 0);
+    check(next_vakat(v, tm2) == 1);
 
     /* Expect index 1 */
     char *time3 = "5:20";
@@ -204,7 +205,68 @@ static int nextvakat_test(void)
     char *time8 = "20:20";
     struct tm tm8;
     parse_timestr(time8, &tm8);
-    check(next_vakat(v, tm8) == 5);
+    check(next_vakat(v, tm8) == 0);
+
+    free(json);
+    free(v);
+
+    done();
+
+}
+
+static int currentvakat_test(void)
+{
+
+    char *json = read_cache("test/vactijacache");
+    struct vaktija *v = parse_data(json);
+
+    /* Expect index 5 */
+    char *time1 = "4:50";
+    struct tm tm1;
+    parse_timestr(time1, &tm1);
+    check(current_vakat(v, tm1) == 5);
+
+    /* Expect index 0 */
+    char *time2 = "4:59";
+    struct tm tm2;
+    parse_timestr(time2, &tm2);
+    check(current_vakat(v, tm2) == 0);
+
+    /* Expect index 0 */
+    char *time3 = "5:20";
+    struct tm tm3;
+    parse_timestr(time3, &tm3);
+    check(current_vakat(v, tm3) == 0);
+
+    /* Expect index 1 */
+    char *time4 = "11:59";
+    struct tm tm4;
+    parse_timestr(time4, &tm4);
+    check(current_vakat(v, tm4) == 1);
+
+    /* Expect index 2 */
+    char *time5 = "12:02";
+    struct tm tm5;
+    parse_timestr(time5, &tm5);
+    check(current_vakat(v, tm5) == 2);
+
+    /* Expect index 3 */
+    char *time6 = "15:00";
+    struct tm tm6;
+    parse_timestr(time6, &tm6);
+    check(current_vakat(v, tm6) == 3);
+
+    /* Expect index 4 */
+    char *time7 = "18:00";
+    struct tm tm7;
+    parse_timestr(time7, &tm7);
+    check(current_vakat(v, tm7) == 4);
+
+    /* Expect index 5 */
+    char *time8 = "20:20";
+    struct tm tm8;
+    parse_timestr(time8, &tm8);
+    check(current_vakat(v, tm8) == 5);
 
     free(json);
     free(v);
@@ -220,7 +282,10 @@ int main(void) {
     test(jsonsearch_test, "searching json test");
     test(jsonparse_test, "parsing cache json");
     test(nextvakat_test, "getting next vakat");
+    test(currentvakat_test, "getting current vakat");
 
     printf("Ran %d tests. Failed %d.\n", (passed_test + failed_test), failed_test);
+
+    return 0;
 
 }

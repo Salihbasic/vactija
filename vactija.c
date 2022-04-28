@@ -273,22 +273,7 @@ int next_vakat(const struct vaktija *vaktija, struct tm time)
         struct tm vakattime;
         parse_timestr(vakatstr, &vakattime);
 
-        if (compare_time(time, vakattime) <= 0) {
-
-            /*
-                Since 0 represents the starting time of fajr,
-                if our time is earlier than fajr, we can assume it
-                is still ish'a prayer.
-            */
-            if (i == 0 && (compare_time(time, vakattime) != 0)) {
-
-                return (PRAYER_TIME_NUM - 1);
-
-            } else {
-
-                return i;
-
-            }
+        if (compare_time(time, vakattime) < 0) {
 
             return i;
 
@@ -301,7 +286,7 @@ int next_vakat(const struct vaktija *vaktija, struct tm time)
             */
             if (i == (PRAYER_TIME_NUM - 1)) {
 
-                return i;
+                return 0;
 
             }
 
@@ -310,5 +295,88 @@ int next_vakat(const struct vaktija *vaktija, struct tm time)
     }
 
     return -1; /* This should never get returned. */
+
+}
+
+/*
+    Returns the index of the current vakat based on provided time.
+*/
+int current_vakat(const struct vaktija *vaktija, struct tm time)
+{
+
+    int next = next_vakat(vaktija, time);
+    int remainder = (next - 1) % PRAYER_TIME_NUM;
+
+    /* 
+        Because it turns out that in C, -1 % 6 = +/- 1, not 5.
+    */
+    return (remainder < 0) ? remainder + PRAYER_TIME_NUM : remainder;
+
+}
+
+static char *vakat_names[PRAYER_TIME_NUM] = {
+    "Dawn",
+    "Sunrise",
+    "Dhuhr",
+    "Asr",
+    "Maghrib",
+    "Isha"
+};
+
+/*
+    vakat has to be a valid vaktija index (0 - 5)
+
+    if context is 0, only the raw timestamp of the vakat shall be printed
+*/
+void print_vakat(const struct vaktija *vaktija, int vakat, int context)
+{
+
+    if (vakat < 0 || vakat > (PRAYER_TIME_NUM - 1)) {
+        printf("Could not print the current vakat. Invalid index passed! (idx: %d)\n", vakat);
+        exit(EXIT_FAILURE);
+    }
+
+    if (context) {
+        
+        printf("%s: %s\n", vakat_names[vakat], vaktija->prayers[vakat]);
+
+    } else {
+
+        printf("%s", vaktija->prayers[vakat]);
+
+    }
+
+}
+
+/*
+    Prints the entire vaktija together with current time.
+
+    This is the default action of the program.
+*/
+void print_vaktija(const struct vaktija *vaktija)
+{
+
+    time_t curr;
+    time(&curr);
+    struct tm current = *localtime(&curr);
+
+    char currstr[6];
+    currstr[0] = '\0';
+    strftime(currstr, 6, "%H:%M", &current);
+    printf("Current time is: %s\n", currstr);
+
+    printf("\n");
+
+    printf("Today's date is %s (%s):\n", vaktija->dates[0], vaktija->dates[1]);
+
+    printf("\n");
+
+    printf("Vaktija for %s:\n", vaktija->location);
+
+    printf("\n");
+
+    for (int i = 0; i < PRAYER_TIME_NUM; i++) {
+        print_vakat(vaktija, i, 1);
+    }
 
 }
