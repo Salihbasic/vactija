@@ -5,7 +5,8 @@ relobj = vactija-cli.o vactija.o temporal.o jsmnutil.o cachefile.o jsmn.o
 testobj = test.o vactija.o temporal.o jsmnutil.o cachefile.o jsmn.o
 
 release : $(relobj)
-	$(CC) -g -o vactija $(relobj) $(libs)
+	mkdir release
+	$(CC) -g -o release/vactija $(relobj) $(libs)
 
 test : $(testobj)
 	$(CC) -g -o vactija-test $(testobj) $(libs)
