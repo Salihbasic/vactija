@@ -31,12 +31,6 @@ cachefile.o : util/cachefile.c util/cachefile.h
 jsmn.o : jsmn/jsmn.c jsmn/jsmn.h
 	$(CC) -g -c jsmn/jsmn.c
 
-.PHONY: clean cleanrel cleantest
+.PHONY: clean
 clean :
-	cleantest cleanrel
-
-cleantest : 
-	-rm $(testobj) vactija-test
-
-cleanrel :
-	-rm $(relobj) vactija
+	rm -f *.o *-test
