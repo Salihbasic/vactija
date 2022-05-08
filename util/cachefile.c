@@ -115,6 +115,14 @@ void write_cache(const char *path, const char *json)
 char *read_cache(const char *path)
 {
 
+    if (cache_exists(path) == 0) {
+
+        printf("Attempted to find cache file at path: %s\n", path);
+        printf("The cache file does not exist. Could not read data!\n");
+        exit(EXIT_FAILURE);
+
+    }
+
     FILE *cache = fopen(path, "r");
 
     if (cache) {
