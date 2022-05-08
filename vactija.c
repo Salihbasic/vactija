@@ -236,9 +236,9 @@ struct vaktija *parse_data(const char *json)
 
     }
 
-    if (result != VACTIJA_JSMN_TOKENS) {
+    if (result != 17 && result != 23) {
 
-        printf("Parsed %d JSON tokens (expected: %d)!\n", result, VACTIJA_JSMN_TOKENS);
+        printf("Parsed %d JSON tokens (expected: 17 or 23)!\n", result);
         exit(EXIT_FAILURE);
 
     }
@@ -326,9 +326,9 @@ static char *vakat_names[PRAYER_TIME_NUM] = {
 /*
     vakat has to be a valid vaktija index (0 - 5)
 
-    if context is 0, only the raw timestamp of the vakat shall be printed
+    if raw is 1, only the raw timestamp of the vakat shall be printed
 */
-void print_vakat(const struct vaktija *vaktija, int vakat, int context)
+void print_vakat(const struct vaktija *vaktija, int vakat, int raw)
 {
 
     if (vakat < 0 || vakat > (PRAYER_TIME_NUM - 1)) {
@@ -336,13 +336,13 @@ void print_vakat(const struct vaktija *vaktija, int vakat, int context)
         exit(EXIT_FAILURE);
     }
 
-    if (context) {
+    if (raw) {
         
-        printf("%s: %s\n", vakat_names[vakat], vaktija->prayers[vakat]);
+        printf("%s", vaktija->prayers[vakat]);
 
     } else {
 
-        printf("%s", vaktija->prayers[vakat]);
+        printf("%s: %s\n", vakat_names[vakat], vaktija->prayers[vakat]);
 
     }
 
@@ -376,7 +376,7 @@ void print_vaktija(const struct vaktija *vaktija)
     printf("\n");
 
     for (int i = 0; i < PRAYER_TIME_NUM; i++) {
-        print_vakat(vaktija, i, 1);
+        print_vakat(vaktija, i, 0);
     }
 
 }
