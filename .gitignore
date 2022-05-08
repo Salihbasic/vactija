@@ -1,3 +1,4 @@
 vactija
 vactija-test
 *.o
+config.h
