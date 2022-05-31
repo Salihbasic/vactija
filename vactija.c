@@ -31,7 +31,7 @@
 
     Has to be freed manually once it is no longer useful.
 */
-static struct vaktija *create_vaktija()
+struct vaktija *create_vaktija()
 {
 
     struct vaktija *v = malloc(sizeof *v);
@@ -49,6 +49,22 @@ static struct vaktija *create_vaktija()
     }
 
     return v;
+
+}
+
+/*
+    Frees a vaktija from the heap under the assumption that it is not only
+    partially initialised (i.e attempts to free all elements of the struct
+    as well, which is the general scenario so far).
+*/
+void delete_vaktija(struct vaktija *vaktija)
+{
+
+	free(vaktija->location);
+	free_array(vaktija->dates, DATUM_NUM);
+	free_array(vaktija->prayers, PRAYER_TIME_NUM);
+	
+	free(vaktija);
 
 }
 

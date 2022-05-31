@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
 
     }
 
-    free(v);
+    delete_vaktija(v);
     free(vdata);
 
     exit(EXIT_SUCCESS);

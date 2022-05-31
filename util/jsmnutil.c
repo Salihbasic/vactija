@@ -146,3 +146,16 @@ char **get_array(const char *js, int idx, jsmntok_t tokens[], size_t arrlen)
     return arr;
 
 }
+
+void free_array(char **arr, size_t arrlen)
+{
+	
+	for (int i = 0; i < arrlen; i++) {
+
+		free(arr[i]);
+
+	}
+
+	free(arr);
+
+}

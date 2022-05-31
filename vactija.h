@@ -40,4 +40,7 @@ int current_vakat(const struct vaktija *vaktija, struct tm time);
 void print_vakat(const struct vaktija *vaktija, int vakat, int raw);
 void print_vaktija(const struct vaktija *vaktija);
 
+struct vaktija *create_vaktija(void);
+void delete_vaktija(struct vaktija *vaktija);
+
 #endif
