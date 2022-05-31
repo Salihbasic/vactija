@@ -1,15 +1,21 @@
 CC = gcc
+INSTALLDIR = /usr/local/bin
 
 libs = -lcurl
 relobj = vactija-cli.o vactija.o temporal.o jsmnutil.o cachefile.o jsmn.o
 testobj = test.o vactija.o temporal.o jsmnutil.o cachefile.o jsmn.o
 
+install : $(relobj)
+	$(CC) -o vactija-rel $(relobj) $(libs)
+	mv vactija-rel $(INSTALLDIR)/
+
 release : $(relobj)
-	mkdir release
-	$(CC) -g -o release/vactija $(relobj) $(libs)
+	mkdir -p release
+	$(CC) -o release/vactija-rel $(relobj) $(libs)
 
 test : $(testobj)
-	$(CC) -g -o vactija-test $(testobj) $(libs)
+	mkdir -p testrel
+	$(CC) -g -o testrel/vactija-test $(testobj) $(libs)
 
 test.o : test/test.c test/test.h vactija.h util/jsmnutil.h util/temporal.h util/cachefile.h
 	$(CC) -g -c test/test.c
