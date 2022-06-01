@@ -330,6 +330,15 @@ int current_vakat(const struct vaktija *vaktija, struct tm time)
 
 }
 
+#ifdef USE_ANSI_COLOR
+
+#define ANSI_YELLOW(str) "\x1b[33m" str "\x1b[0m"
+#define ANSI_CYAN(str) "\x1b[36m" str "\x1b[0m"
+#define ANSI_GREEN(str) "\x1b[32m" str "\x1b[0m"
+#define ANSI_RED(str) "\x1b[31m" str "\x1b[0m"
+
+#endif
+
 static char *vakat_names[PRAYER_TIME_NUM] = {
     "Dawn",
     "Sunrise",
@@ -358,7 +367,15 @@ void print_vakat(const struct vaktija *vaktija, int vakat, int raw)
 
     } else {
 
+	#ifdef USE_ANSI_COLOR
+
+	printf(ANSI_CYAN("%s") ": " ANSI_YELLOW("%s") "\n", vakat_names[vakat], vaktija->prayers[vakat]);
+
+	#else
+
         printf("%s: %s\n", vakat_names[vakat], vaktija->prayers[vakat]);
+
+	#endif
 
     }
 
@@ -379,15 +396,41 @@ void print_vaktija(const struct vaktija *vaktija)
     char currstr[6];
     currstr[0] = '\0';
     strftime(currstr, 6, "%H:%M", &current);
+   
+    #ifdef USE_ANSI_COLOR
+
+    printf(ANSI_CYAN("Current time is") ": " ANSI_YELLOW("%s") "\n", currstr);
+   
+    #else
+    
     printf("Current time is: %s\n", currstr);
 
+    #endif
+
     printf("\n");
+
+    #ifdef USE_ANSI_COLOR
+
+    printf(ANSI_CYAN("Today's date is ") ANSI_RED("%s ") "(" ANSI_GREEN("%s") "):\n", 
+		    vaktija->dates[0], vaktija->dates[1]);
+
+    #else
 
     printf("Today's date is %s (%s):\n", vaktija->dates[0], vaktija->dates[1]);
 
+    #endif
+
     printf("\n");
 
+    #ifdef USE_ANSI_COLOR
+
+    printf(ANSI_CYAN("Vaktija for") ": " ANSI_YELLOW("%s") "\n", vaktija->location); 
+
+    #else
+
     printf("Vaktija for %s:\n", vaktija->location);
+
+    #endif
 
     printf("\n");
 

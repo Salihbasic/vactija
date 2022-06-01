@@ -1,5 +1,6 @@
 CC = gcc
 INSTALLDIR = /usr/local/bin
+TERMCOLORS = -DUSE_ANSI_COLOR
 
 libs = -lcurl
 relobj = vactija-cli.o vactija.o temporal.o jsmnutil.o cachefile.o jsmn.o
@@ -24,7 +25,7 @@ vactija-cli.o : vactija-cli.c vactija.h config.h util/cachefile.h
 	$(CC) -g -c vactija-cli.c
 
 vactija.o : vactija.c vactija.h util/jsmnutil.h jsmn/jsmn.h util/temporal.h
-	$(CC) -g -c vactija.c
+	$(CC) -g -c vactija.c $(TERMCOLORS)
 
 jsmnutil.o : util/jsmnutil.c util/jsmnutil.h jsmn/jsmn.h
 	$(CC) -g -c util/jsmnutil.c
