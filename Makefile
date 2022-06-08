@@ -8,7 +8,7 @@ testobj = test.o vactija.o temporal.o jsmnutil.o cachefile.o jsmn.o
 
 install : $(relobj)
 	$(CC) -o vactija-rel $(relobj) $(libs)
-	mv vactija-rel $(INSTALLDIR)/
+	mv vactija-rel $(INSTALLDIR)/vactija
 
 release : $(relobj)
 	mkdir -p release
