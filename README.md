@@ -3,6 +3,8 @@ Bismillah.
 
 This is an unofficial Linux front-end for [Vaktija.ba](https://vaktija.ba/). It relies on the data provided by this service and presents it on the command-line interface.
 
+![](https://media.giphy.com/media/8FRom0gapiXxl2w8zs/giphy.gif)
+
 # Dependences
 Vactija uses [libcurl](https://github.com/curl/curl) to access API data and therefore also requires a working internet connection (at least once per day).
 
