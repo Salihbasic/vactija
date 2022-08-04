@@ -330,6 +330,44 @@ int current_vakat(const struct vaktija *vaktija, struct tm time)
 
 }
 
+void calculate_midnight(const struct vaktija *vaktija, struct tm *midnight)
+{
+    
+    struct tm fajr; 
+    parse_timestr(vaktija->prayers[0], &fajr);
+
+    struct tm maghrib;
+    parse_timestr(vaktija->prayers[4], &maghrib);
+
+    struct tm sub;
+    subtract_time(fajr, maghrib, &sub);
+
+    struct tm div;
+    divide_time(sub, 2, &div);
+
+    subtract_time(fajr, div, midnight);
+    
+} 
+
+void calculate_third(const struct vaktija *vaktija, struct tm *third)
+{
+    
+    struct tm fajr; 
+    parse_timestr(vaktija->prayers[0], &fajr);
+
+    struct tm maghrib;
+    parse_timestr(vaktija->prayers[4], &maghrib);
+
+    struct tm sub;
+    subtract_time(fajr, maghrib, &sub);
+
+    struct tm div;
+    divide_time(sub, 3, &div);
+
+    subtract_time(fajr, div, third);
+    
+}
+
 #ifdef USE_ANSI_COLOR
 
 #define ANSI_YELLOW(str) "\x1b[33m" str "\x1b[0m"
@@ -437,5 +475,44 @@ void print_vaktija(const struct vaktija *vaktija)
     for (int i = 0; i < PRAYER_TIME_NUM; i++) {
         print_vakat(vaktija, i, 0);
     }
+
+    printf("\n");
+
+    struct tm midnight;
+    parse_timestr("00:00", &midnight);
+    calculate_midnight(vaktija, &midnight);
+
+    char midstr[6];
+    midstr[0] = '\0';
+    strftime(midstr, 6, "%H:%M", &midnight);
+
+    #ifdef USE_ANSI_COLOR
+
+    printf(ANSI_CYAN("Midnight is on") ": " ANSI_YELLOW("%s") "\n", midstr);
+
+    #else
+
+    printf("Midnight is on: %s\n", midstr);
+
+    #endif
+
+    struct tm third;
+    parse_timestr("00:00", &third);
+    calculate_third(vaktija, &third);
+
+    char thirdstr[6];
+    thirdstr[0] = '\0';
+    strftime(thirdstr, 6, "%H:%M", &third);
+
+    #ifdef USE_ANSI_COLOR
+
+    printf(ANSI_CYAN("Last third of the night is on") ": " ANSI_YELLOW("%s") "\n", thirdstr);
+
+    #else
+
+    printf("Last third of the night is on: %s\n", thirdstr);
+
+    #endif
+
 
 }

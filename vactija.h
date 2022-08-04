@@ -37,6 +37,9 @@ struct vaktija *parse_data(const char *json);
 int next_vakat(const struct vaktija *vaktija, struct tm time);
 int current_vakat(const struct vaktija *vaktija, struct tm time);
 
+void calculate_midnight(const struct vaktija *vaktija, struct tm *midnight);
+void calculate_third(const struct vaktija *vaktija, struct tm *third);
+
 void print_vakat(const struct vaktija *vaktija, int vakat, int raw);
 void print_vaktija(const struct vaktija *vaktija);
 

@@ -8,11 +8,15 @@
 #include "../util/cachefile.h"
 #include "../vactija.h"
 
+#define DUMMY_CACHE_FILE "testrel/dummycache"
+
 static int passed_test = 0;
 static int failed_test = 0;
 
 static int timestr_parsing(void);
 static int minute_comparison(void);
+static int time_subtraction(void);
+static int time_division(void);
 static int jsonparse_test(void);
 static int jsonsearch_test(void);
 static int nextvakat_test(void);
@@ -87,10 +91,77 @@ static int minute_comparison(void)
 
 }
 
+static int time_subtraction(void)
+{
+    
+    char *time1 = "4:59";
+    struct tm tm1;
+    parse_timestr(time1, &tm1);
+
+    char *time2 = "17:27";
+    struct tm tm2;
+    parse_timestr(time2, &tm2);
+
+    char *ctr1 = "11:32";
+    struct tm tmctr1;
+    parse_timestr(ctr1, &tmctr1);
+
+    struct tm res1;
+    parse_timestr("00:00", &res1);
+    subtract_time(tm1, tm2, &res1);
+
+    check(compare_time(res1, tmctr1) == 0);
+
+    /* Edge case test */
+
+    char *time4 = "01:18";
+    struct tm tm4;
+    parse_timestr(time4, &tm4);
+
+    char *time5 = "02:20";
+    struct tm tm5;
+    parse_timestr(time5, &tm5);
+
+    char *ctr2 = "22:58";
+    struct tm tmctr2;
+    parse_timestr(ctr2, &tmctr2);
+
+    struct tm res2;
+    parse_timestr("00:00", &res2);
+    subtract_time(tm4, tm5, &res2);
+
+    check(compare_time(res2, tmctr2) == 0);
+
+    done();
+
+}
+
+static int time_division(void)
+{
+
+    char *time1 = "11:32";
+    struct tm tm1;
+    parse_timestr(time1, &tm1);
+
+    char *ctr1 = "05:46";
+    struct tm tmctr1;
+    parse_timestr(ctr1, &tmctr1);
+
+    int div1 = 2;
+    struct tm res1;
+    parse_timestr("00:00", &res1);
+    divide_time(tm1, div1, &res1);
+
+    check(compare_time(res1, tmctr1) == 0); 
+
+    done();
+
+}
+
 static int jsonsearch_test(void)
 {
 
-    char *json = read_cache("test/vactijacache");
+    char *json = read_cache(DUMMY_CACHE_FILE);
 
     jsmn_parser pars;
     jsmntok_t tok[VACTIJA_JSMN_TOKENS]; /* Based on current JSON file structure */
@@ -98,7 +169,7 @@ static int jsonsearch_test(void)
     jsmn_init(&pars);
     int result = jsmn_parse(&pars, json, strlen(json), tok, VACTIJA_JSMN_TOKENS);
 
-    check(result == 15);
+    check(result == 17);
 
     jsmntok_t *loctok = find_by_key(json, "lokacija", tok, VACTIJA_JSMN_TOKENS);
     char *location = get_simple(json, loctok);
@@ -128,12 +199,12 @@ static int jsonsearch_test(void)
 static int jsonparse_test(void)
 {
 
-    char *json = read_cache("test/vactijacache");
+    char *json = read_cache(DUMMY_CACHE_FILE);
 
     struct vaktija *v = parse_data(json);
 
     /*
-        Based on values from the test/vactijacache file
+        Based on values from the dummycache file
     */
     check(strcmp(v->location, "Sarajevo") == 0);
     check(strcmp(v->dates[0], "18. redžeb 1443") == 0);
@@ -156,7 +227,7 @@ static int jsonparse_test(void)
 static int nextvakat_test(void)
 {
 
-    char *json = read_cache("test/vactijacache");
+    char *json = read_cache(DUMMY_CACHE_FILE);
     struct vaktija *v = parse_data(json);
 
     /* Expect index 0 */
@@ -217,7 +288,7 @@ static int nextvakat_test(void)
 static int currentvakat_test(void)
 {
 
-    char *json = read_cache("test/vactijacache");
+    char *json = read_cache(DUMMY_CACHE_FILE);
     struct vaktija *v = parse_data(json);
 
     /* Expect index 5 */
@@ -255,13 +326,6 @@ static int currentvakat_test(void)
     struct tm tm6;
     parse_timestr(time6, &tm6);
     check(current_vakat(v, tm6) == 3);
-
-    /* Expect index 4 */
-    char *time7 = "18:00";
-    struct tm tm7;
-    parse_timestr(time7, &tm7);
-    check(current_vakat(v, tm7) == 4);
-
     /* Expect index 5 */
     char *time8 = "20:20";
     struct tm tm8;
@@ -279,6 +343,8 @@ int main(void) {
 
     test(timestr_parsing, "parsing timestrings");
     test(minute_comparison, "comparing minutes");
+    test(time_subtraction, "subtracting times");
+    test(time_division, "dividing time");
     test(jsonsearch_test, "searching json test");
     test(jsonparse_test, "parsing cache json");
     test(nextvakat_test, "getting next vakat");

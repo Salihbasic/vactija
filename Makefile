@@ -2,7 +2,7 @@ CC = gcc
 INSTALLDIR = /usr/local/bin
 TERMCOLORS = -DUSE_ANSI_COLOR
 
-libs = -lcurl
+libs = -lcurl -lm
 relobj = vactija-cli.o vactija.o temporal.o jsmnutil.o cachefile.o jsmn.o
 testobj = test.o vactija.o temporal.o jsmnutil.o cachefile.o jsmn.o
 
@@ -17,6 +17,7 @@ release : $(relobj)
 test : $(testobj)
 	mkdir -p testrel
 	$(CC) -g -o testrel/vactija-test $(testobj) $(libs)
+	cp test/dummycache testrel/dummycache
 
 test.o : test/test.c test/test.h vactija.h util/jsmnutil.h util/temporal.h util/cachefile.h
 	$(CC) -g -c test/test.c
