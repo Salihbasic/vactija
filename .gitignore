@@ -2,3 +2,6 @@ vactija
 vactija-test
 *.o
 config.h
+
+release/
+testrel/
