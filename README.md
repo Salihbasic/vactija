@@ -6,12 +6,13 @@ This is an unofficial Linux front-end for [Vaktija.ba](https://vaktija.ba/). It 
 ![](https://media.giphy.com/media/8FRom0gapiXxl2w8zs/giphy.gif)
 
 # Dependences
-Vactija uses [libcurl](https://github.com/curl/curl) to access API data and therefore also requires a working internet connection (at least once per day).
+Since v2.0.0, Vactija uses no outside dependencies and relies solely on its internal data, which is the same as the data provided by the public
+Vaktija.ba API.
 
-To parse JSON data, it depends on [jsmn](https://github.com/zserge/jsmn) which is a header library included in the program's source code.
+Older versions of Vactija depended on `libcurl` and `jsmn` to fetch and parse JSON data respectively.
 
 # Installation and configuration
-You will need `GNU Make` and `GNU C Compiler` (although other compilers might work) as well as `libcurl` to install Vactija:
+You will need `GNU Make` and `GNU C Compiler` (although other compilers might work) as well as to install Vactija:
 
 
 1. Run `git clone https://github.com/Salihbasic/vactija`
