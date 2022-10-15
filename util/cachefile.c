@@ -53,7 +53,11 @@ int cache_outdated(const char *path)
         time_t current;
         time(&current);
 
-        time_t mtime = meta.st_mtim.tv_sec;
+	#ifdef __APPLE__
+        time_t mtime = meta.st_mtimespec.tv_sec;
+	#elif
+	time_t mtime = meta.st_mtime.tv_sec;
+	#endif
 
         /* 
            localtime stores results in a buffer, so we need to

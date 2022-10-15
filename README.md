@@ -1,7 +1,7 @@
 # Vactija
 Bismillah. 
 
-This is an unofficial Linux front-end for [Vaktija.ba](https://vaktija.ba/). It relies on the data provided by this service and presents it on the command-line interface.
+This is an unofficial Linux/macOS front-end for [Vaktija.ba](https://vaktija.ba/). It relies on the data provided by this service and presents it on the command-line interface.
 
 ![](https://media.giphy.com/media/8FRom0gapiXxl2w8zs/giphy.gif)
 
@@ -11,8 +11,7 @@ Vactija uses [libcurl](https://github.com/curl/curl) to access API data and ther
 To parse JSON data, it depends on [jsmn](https://github.com/zserge/jsmn) which is a header library included in the program's source code.
 
 # Installation and configuration
-You will need `GNU Make` and `GNU C Compiler` (although other compilers might work) as well as `libcurl` to install Vactija:
-
+You will need a C compiler, `make` and `libcurl` to install Vactija:
 
 1. Run `git clone https://github.com/Salihbasic/vactija`
 2. `cd vactija`
