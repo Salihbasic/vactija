@@ -55,8 +55,8 @@ int cache_outdated(const char *path)
 
 	#ifdef __APPLE__
         time_t mtime = meta.st_mtimespec.tv_sec;
-	#elif
-	time_t mtime = meta.st_mtime.tv_sec;
+	#else
+	time_t mtime = meta.st_mtim.tv_sec;
 	#endif
 
         /* 
